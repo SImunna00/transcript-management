@@ -39,6 +39,11 @@
                 </a>
             @endif
 
+            <!-- Add the "Register" link for users who haven't registered yet -->
+            <a href="{{ route('register') }}" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ms-3">
+                {{ __('Not registered?') }}
+            </a>
+
             <x-primary-button class="ms-3">
                 {{ __('Log in') }}
             </x-primary-button>

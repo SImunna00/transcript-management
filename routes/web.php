@@ -2,14 +2,31 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\studentController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('home');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+
+
+
+Route::middleware('auth')->group(function () {
+
+    // Route::get('/student/home',[StudentController::class,'home'])->name//('student.home');
+
+     Route::get('/student/dashboard', [StudentController::class, 'dashboard'])->name('student.dashboard');
+    
+    Route::get('/student/profile', [StudentController::class, 'profile'])->name('student.profile');
+
+    Route::post('/student/profile', [StudentController::class, 'store'])->name('student.profile.store');
+
+    Route::get('/student/settings', fn () => view('student.settings'))->name('student.settings');
+
+    Route::post('/student/settings', [StudentController::class, 'updatePassword'])->name('student.passwordSetting');
+   
+});
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

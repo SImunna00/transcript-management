@@ -27,24 +27,34 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+   public function store(Request $request): RedirectResponse
+{
+    $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+        'studentid' => ['required', 'string', 'max:255', 'unique:users'],  // Add validation for studentid
+        'password' => ['required', 'confirmed', Rules\Password::defaults()],
+    ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'studentid' => $request->studentid,  // Store the studentid
+        'password' => Hash::make($request->password),
+    ]);
 
-        event(new Registered($user));
+    \Log::info('User created:', $user->toArray());
 
-        Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
-    }
+
+    event(new Registered($user));
+
+    Auth::login($user);
+
+     return response()->json([
+        'message' => 'User registered successfully',
+        'user' => $user
+    ]);
+}
+
 }
