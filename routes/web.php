@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\studentController;
+use App\Http\Controllers\AdminController;
 
 Route::get('/', function () {
     return view('home');
@@ -24,8 +25,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/student/settings', fn () => view('student.settings'))->name('student.settings');
 
     Route::post('/student/settings', [StudentController::class, 'updatePassword'])->name('student.passwordSetting');
+
+    Route::get('/student/result',[studentController::class, 'results'])->name('student.applyResult');
+
+
+    
+    Route::get('/student/view-result',[studentController::class, 'view_Result'])->name('student.viewResult');
    
 });
+
+Route::get('/admin/dashboard',[AdminController::class, 'dashboard'])->name('admin.dashboard'); 
+
+
+Route::get('/admin/upload',[AdminController::class, 'Request'])->name('admin.Request'); 
+
+
+
+
 
 
 Route::middleware('auth')->group(function () {

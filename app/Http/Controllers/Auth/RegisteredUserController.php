@@ -43,18 +43,10 @@ class RegisteredUserController extends Controller
         'password' => Hash::make($request->password),
     ]);
 
-    \Log::info('User created:', $user->toArray());
-
-
-
     event(new Registered($user));
 
     Auth::login($user);
-
-     return response()->json([
-        'message' => 'User registered successfully',
-        'user' => $user
-    ]);
+    return redirect()->route('student.dashboard');
 }
 
-}
+}  

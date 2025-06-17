@@ -13,6 +13,12 @@
                     <h3>Update Your Profile</h3>
                 </div>
                 <div class="card-body">
+                    <!-- Success Message -->
+                    @if (session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
+                        </div>
+                    @endif
                     <!-- Profile Update Form -->
                     <form method="POST" enctype="multipart/form-data" action="{{ route('student.profile.store') }}">
                         @csrf

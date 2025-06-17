@@ -72,4 +72,14 @@ class studentController extends Controller
         
         return view('student.dashboard');  
     }
+
+
+    public function results()
+    {
+        return view('student.result');
+    }
+     public function view_Result()
+    {
+        return view('student.view-result');
+    }
 }

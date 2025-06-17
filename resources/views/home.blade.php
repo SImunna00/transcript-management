@@ -13,7 +13,11 @@
 
 @section('content')
 
- 
+<div>
+    <a href="{{ route('register') }}" class="btn btn-primary">
+    Register
+</a>
+</div>
 
 
 @endsection
