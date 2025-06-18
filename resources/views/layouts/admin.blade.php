@@ -63,7 +63,7 @@
 
 
       <!--begin::Footer-->
-    @include('partials.footer')
+    @include('partials.footer-2')
       <!--end::Footer-->
 
     </div>

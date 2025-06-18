@@ -19,36 +19,35 @@
                 </h3>
             </div>
             
-            <form action="# " method="POST" id="requestForm">
+            <form action="{{ route('payment.initiate') }}" method="POST" id="requestForm">
                 @csrf
                 <div class="card-body">
                     <!-- Academic Year Selection -->
-                    <!-- Academic Year Selection - FIXED VERSION -->
-<div class="form-group">
-    <label for="year">
-        <i class="fas fa-calendar-alt mr-1"></i>
-        Academic Year <span class="text-danger">*</span>
-    </label>
-    <select class="form-control @error('year') is-invalid @enderror" 
-            id="year" name="year" required>
-        <option value="">-- Select Academic Year --</option>
-        <option value="1" {{ old('year') == '1' ? 'selected' : '' }}>
-            1st Year
-        </option>
-        <option value="2" {{ old('year') == '2' ? 'selected' : '' }}>
-            2nd Year
-        </option>
-        <option value="3" {{ old('year') == '3' ? 'selected' : '' }}>
-            3rd Year
-        </option>
-        <option value="4" {{ old('year') == '4' ? 'selected' : '' }}>
-            4th Year
-        </option>
-    </select>
-    @error('year')
-        <div class="invalid-feedback">{{ $message }}</div>
-    @enderror
-</div>
+                    <div class="form-group">
+                        <label for="year">
+                            <i class="fas fa-calendar-alt mr-1"></i>
+                            Academic Year <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control @error('year') is-invalid @enderror" 
+                                id="year" name="year" required>
+                            <option value="">-- Select Academic Year --</option>
+                            <option value="1" {{ old('year') == '1' ? 'selected' : '' }}>
+                                1st Year
+                            </option>
+                            <option value="2" {{ old('year') == '2' ? 'selected' : '' }}>
+                                2nd Year
+                            </option>
+                            <option value="3" {{ old('year') == '3' ? 'selected' : '' }}>
+                                3rd Year
+                            </option>
+                            <option value="4" {{ old('year') == '4' ? 'selected' : '' }}>
+                                4th Year
+                            </option>
+                        </select>
+                        @error('year')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
 
                     <!-- Term/Semester Selection -->
                     <div class="form-group">
@@ -65,9 +64,21 @@
                             <option value="2nd Semester" {{ old('term') == '2nd Semester' ? 'selected' : '' }}>
                                 2nd Semester
                             </option>
-                            
                         </select>
                         @error('term')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Amount Input Field -->
+                    <div class="form-group">
+                        <label for="amount">
+                            <i class="fas fa-money-bill-alt mr-1"></i>
+                            Amount <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control @error('amount') is-invalid @enderror"
+                               id="amount" name="amount" value="{{ old('amount') }}" required>
+                        @error('amount')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -81,9 +92,6 @@
                         <textarea class="form-control" id="additional_info" name="additional_info" 
                                   rows="3" placeholder="Any specific requirements or notes...">{{ old('additional_info') }}</textarea>
                     </div>
-
-                   
-                
 
                     <!-- Check for existing requests -->
                     <div id="existingRequestAlert" class="alert alert-warning" style="display: none;">
@@ -110,49 +118,6 @@
                 </div>
             </form>
         </div>
-
-        <!-- Recent Requests Summary -->
-        <div class="card card-secondary mt-4">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-history mr-2"></i>
-                    Recent Requests Summary
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-3">
-                        <div class="description-block">
-                            <h5 class="description-header text-primary">{{ $totalRequests ?? 0 }}</h5>
-                            <span class="description-text">Total Requests</span>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="description-block">
-                            <h5 class="description-header text-warning">{{ $pendingRequests ?? 0 }}</h5>
-                            <span class="description-text">Pending Payment</span>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="description-block">
-                            <h5 class="description-header text-info">{{ $processingRequests ?? 0 }}</h5>
-                            <span class="description-text">Processing</span>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="description-block">
-                            <h5 class="description-header text-success">{{ $completedRequests ?? 0 }}</h5>
-                            <span class="description-text">Completed</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-center mt-3">
-                    <a href="{{ route('student.viewResult') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-eye"></i> View All Requests
-                    </a>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 @endsection
@@ -172,7 +137,7 @@ $(document).ready(function() {
 
     function checkExistingRequest(year, term) {
         $.ajax({
-            url: "#",
+            url: "#",  // Replace with actual URL
             method: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',

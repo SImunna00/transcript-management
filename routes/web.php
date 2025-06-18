@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\studentController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\PaymentController;
 
 Route::get('/', function () {
     return view('home');
@@ -34,10 +35,63 @@ Route::middleware('auth')->group(function () {
    
 });
 
+
+
 Route::get('/admin/dashboard',[AdminController::class, 'dashboard'])->name('admin.dashboard'); 
 
 
 Route::get('/admin/upload',[AdminController::class, 'Request'])->name('admin.Request'); 
+
+
+
+
+
+
+
+
+
+
+Route::controller(PaymentController::class)
+    ->prefix('sslcommerz') // Prefix to avoid conflicts
+    ->name('sslc.')
+    ->group(function () {
+        Route::post('success', 'paymentSuccess')->name('success');
+        Route::post('failure', 'paymentFail')->name('failure');
+        Route::post('cancel', 'paymentCancel')->name('cancel');
+        Route::post('ipn', 'paymentIPN')->name('ipn');
+    });
+
+Route::post('payment/initiate', [PaymentController::class, 'initiatePayment'])->name('payment.initiate');
+Route::get('payment/success', [PaymentController::class, 'paymentSuccess'])->name('sslc.success');
+Route::get('payment/fail', [PaymentController::class, 'paymentFail'])->name('sslc.failure');
+Route::get('payment/cancel', [PaymentController::class, 'paymentCancel'])->name('sslc.cancel');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
