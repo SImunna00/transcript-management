@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 
 @section('title','Home')
@@ -254,21 +255,13 @@
                         <br>Access your transcripts anytime, anywhere with complete confidence
                     </p>
                     <div class="hero-buttons">
-                        @guest
-                            <a href="#" class="btn btn-primary-hero btn-hero">
-                                <i class="fas fa-sign-in-alt me-2"></i>Login
-                            </a>
-                            <a href="#" class="btn btn-outline-hero btn-hero">
-                                <i class="fas fa-user-plus me-2"></i>Register
-                            </a>
-                        @else
-                            <a href="#" class="btn btn-primary-hero btn-hero">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                            </a>
-                            <a href="#" class="btn btn-outline-hero btn-hero">
-                                <i class="fas fa-file-alt me-2"></i>My Results
-                            </a>
-                        @endguest
+                        <!-- Always show login and register buttons -->
+                        <a href="{{ route('login') }}" class="btn btn-primary-hero btn-hero">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                        <a href="{{ route('register') }}" class="btn btn-outline-hero btn-hero">
+                            <i class="fas fa-user-plus me-2"></i>Register
+                        </a>
                     </div>
                 </div>
             </div>
@@ -377,15 +370,9 @@
             <div class="col-lg-8 text-center">
                 <h2 class="cta-title">Ready to Get Started?</h2>
                 <p class="cta-text">Join thousands of students who trust our platform for their academic record management</p>
-                @guest
-                    <a href="#" class="btn btn-primary btn-lg btn-hero">
-                        <i class="fas fa-rocket me-2"></i>Get Started Now
-                    </a>
-                @else
-                    <a href="#" class="btn btn-primary btn-lg btn-hero">
-                        <i class="fas fa-plus me-2"></i>Request New Result
-                    </a>
-                @endguest
+                <a href="{{ route('register') }}" class="btn btn-primary btn-lg btn-hero">
+                    <i class="fas fa-rocket me-2"></i>Get Started Now
+                </a>
             </div>
         </div>
     </div>
@@ -453,7 +440,7 @@
                     navbar.classList.remove('navbar-scrolled');
                 }
             }
-        });
+        }));
     });
 </script>
 @endpush

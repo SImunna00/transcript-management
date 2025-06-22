@@ -12,13 +12,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
     protected $table = 'transcript_requests'; // Ensure this is the correct table name
 
-    protected $fillable = [
+      protected $fillable = [
         'user_id',
         'academic_year',
         'term',
         'additional_info',
+        'amount', // Add this
         'payment_status',
+        'payment_method',
         'transaction_id',
     ];
+
 }
 

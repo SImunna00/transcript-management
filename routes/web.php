@@ -31,16 +31,46 @@ Route::middleware('auth')->group(function () {
 
 
     
-    Route::get('/student/view-result',[studentController::class, 'view_Result'])->name('student.viewResult');
+    Route::get('/student/view-result',[studentController::class, 'viewResult'])->name('student.viewResult');
+
+    // Download Result
+    Route::get('/student/download-result/{id}', [StudentController::class, 'downloadResult'])->name('student.downloadResult');
+    
+    // Delete Request (for unpaid requests only)
+    Route::delete('/student/delete-request/{id}', [StudentController::class, 'deleteRequest'])->name('student.deleteRequest');
    
+});
+
+//admin
+
+
+
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    
+    // Admin Dashboard
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    
+    // Transcript Requests Management
+    Route::get('/requests', [AdminController::class, 'requests'])->name('requests');
+    Route::put('/requests/{id}/status', [AdminController::class, 'updateStatus'])->name('update-status');
+    Route::post('/requests/{id}/upload', [AdminController::class, 'uploadTranscript'])->name('upload-transcript');
+    Route::get('/requests/{id}/download', [AdminController::class, 'downloadTranscript'])->name('download-transcript');
+    Route::delete('/requests/{id}', [AdminController::class, 'deleteRequest'])->name('delete-request');
+    
+    // Bulk operations
+    Route::post('/requests/bulk-update', [AdminController::class, 'bulkUpdateStatus'])->name('bulk-update-status');
+    
+    // Export functionality
+    Route::get('/requests/export', [AdminController::class, 'exportRequests'])->name('export-requests');
+    
+    // API endpoints for dashboard stats
+    Route::get('/api/stats', [AdminController::class, 'getRequestStats'])->name('api.stats');
+    
 });
 
 
 
-Route::get('/admin/dashboard',[AdminController::class, 'dashboard'])->name('admin.dashboard'); 
-
-
-Route::get('/admin/upload',[AdminController::class, 'Request'])->name('admin.Request'); 
 
 
 
@@ -51,44 +81,21 @@ Route::get('/admin/upload',[AdminController::class, 'Request'])->name('admin.Req
 
 
 
+Route::middleware(['auth'])->group(function () {
+    Route::post('/payment/initiate', [PaymentController::class, 'initiatePayment'])->name('payment.initiate');
+});
+
+// SSLCommerz callback routes (accessible without auth middleware)
+// These routes should handle both GET and POST methods for maximum compatibility
 Route::controller(PaymentController::class)
-    ->prefix('sslcommerz') // Prefix to avoid conflicts
+    ->prefix('sslcommerz')
     ->name('sslc.')
     ->group(function () {
-        Route::post('success', 'paymentSuccess')->name('success');
-        Route::post('failure', 'paymentFail')->name('failure');
-        Route::post('cancel', 'paymentCancel')->name('cancel');
+        Route::match(['get', 'post'], 'success', 'paymentSuccess')->name('success');
+        Route::match(['get', 'post'], 'failure', 'paymentFail')->name('failure');
+        Route::match(['get', 'post'], 'cancel', 'paymentCancel')->name('cancel');
         Route::post('ipn', 'paymentIPN')->name('ipn');
     });
-
-Route::post('payment/initiate', [PaymentController::class, 'initiatePayment'])->name('payment.initiate');
-Route::get('payment/success', [PaymentController::class, 'paymentSuccess'])->name('sslc.success');
-Route::get('payment/fail', [PaymentController::class, 'paymentFail'])->name('sslc.failure');
-Route::get('payment/cancel', [PaymentController::class, 'paymentCancel'])->name('sslc.cancel');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

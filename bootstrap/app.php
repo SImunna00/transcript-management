@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Foundation\Application;
@@ -11,7 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Add CSRF exceptions for SSLCommerz routes
+        $middleware->validateCsrfTokens(except: [
+            'sslcommerz/*'
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

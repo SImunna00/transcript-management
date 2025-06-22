@@ -20,36 +20,28 @@ class PaymentController extends Controller
             'amount' => 'required|numeric|min:1',
         ]);
 
+        // Generate unique transaction ID first
+        $transactionId = 'TXN_' . time() . '_' . rand(1000, 9999);
+
         // Save the request details in the database
         $order = TranscriptRequest::create([
             'user_id' => auth()->user()->id,
             'academic_year' => $request->year,
             'term' => $request->term,
             'additional_info' => $request->additional_info,
-            'payment_status' => 'pending',  // Default payment status
+            'amount' => $request->amount,
+            'payment_status' => 'pending',
+            'payment_method' => 'sslcommerz',
+            'transaction_id' => $transactionId,
         ]);
 
-        // Prepare payment details for SSLCommerz
-        $orderData = [
-            'total_amount' => $request->amount,  // Payment amount
-            'currency' => 'BDT',  // Currency in BDT
-            'tran_id' => $order->id,  // Use the order ID as the transaction ID
-            'success_url' => route('sslc.success'),
-            'fail_url' => route('sslc.failure'),
-            'cancel_url' => route('sslc.cancel'),
-            'cus_name' => auth()->user()->name,
-            'cus_email' => auth()->user()->email,
-            'cus_phone' => auth()->user()->phone,  // Ensure this field exists in your user model
-            'additional_info' => $request->additional_info,  // Optional additional information
-        ];
-
-        // Step 2: Create payment link with SSLCommerz
-        $response = Sslcommerz::setOrder($request->amount, $order->id, "Transcript Request")
-            ->setCustomer(auth()->user()->name, auth()->user()->email, auth()->user()->phone)
-            ->setShippingInfo(1, 'Shipping Address')  // You can pass actual shipping data here
+        // Create payment link with SSLCommerz
+        $response = Sslcommerz::setOrder($request->amount, $transactionId, "Transcript Request")
+            ->setCustomer(auth()->user()->name, auth()->user()->email, auth()->user()->phone ?? '01700000000')
+            ->setShippingInfo(1, 'Dhaka, Bangladesh')
             ->makePayment();
 
-        // Step 3: Handle Payment Response
+        // Handle Payment Response
         if ($response->success()) {
             // Redirect user to SSLCommerz payment gateway page
             return redirect($response->gatewayPageURL());
@@ -59,61 +51,124 @@ class PaymentController extends Controller
         }
     }
 
-    // Step 4: Handle Payment Success
+    // Step 2: Handle Payment Success
     public function paymentSuccess(Request $request)
     {
-        $transactionId = $request->input('tran_id');  // Get the transaction ID
-        $amount = $request->input('amount');  // Get the payment amount from the response
+        // Log the response for debugging
+        Log::info('SSLCommerz Success Response:', $request->all());
 
-        // Step 5: Validate Payment
+        $transactionId = $request->input('tran_id');
+        $amount = $request->input('amount');
+        $status = $request->input('status');
+
+        // Validate Payment with SSLCommerz
         $isValid = Sslcommerz::validatePayment($request->all(), $transactionId, $amount);
 
-        if ($isValid) {
-            // If payment is valid, update the order status to 'paid'
-            $order = TranscriptRequest::find($transactionId);
+        if ($isValid && $status == 'VALID') {
+            // Find order by transaction_id instead of using tran_id as primary key
+            $order = TranscriptRequest::where('transaction_id', $transactionId)->first();
+            
             if ($order) {
-                $order->payment_status = 'paid';  // Update payment status
-                $order->save();
-            }
+                $order->update([
+                    'payment_status' => 'paid',
+                    'payment_method' => 'sslcommerz'
+                ]);
 
-            // Step 6: Show success view
-            return view('payment.success', ['transactionId' => $transactionId]);
+                Log::info('Payment successful for transaction: ' . $transactionId);
+                
+                return view('payment.success', [
+                    'transactionId' => $transactionId,
+                    'order' => $order
+                ]);
+            } else {
+                Log::error('Order not found for transaction: ' . $transactionId);
+                return view('payment.fail')->with('error', 'Order not found');
+            }
         } else {
-            // If payment is invalid, show failure view
-            return view('payment.fail');
+            Log::error('Payment validation failed for transaction: ' . $transactionId);
+            return view('payment.fail')->with('error', 'Payment validation failed');
         }
     }
 
-    // Step 7: Handle Payment Failure
+    // Step 3: Handle Payment Failure
     public function paymentFail(Request $request)
     {
-        // Handle failed payment
+        Log::info('SSLCommerz Fail Response:', $request->all());
+        
+        $transactionId = $request->input('tran_id');
+        
+        if ($transactionId) {
+            $order = TranscriptRequest::where('transaction_id', $transactionId)->first();
+            if ($order) {
+                $order->update([
+                    'payment_status' => 'failed',
+                    'payment_method' => 'sslcommerz'
+                ]);
+            }
+        }
+
         return view('payment.fail');
     }
 
-    // Step 8: Handle Payment Cancellation
+    // Step 4: Handle Payment Cancellation
     public function paymentCancel(Request $request)
     {
-        // Handle canceled payment
+        Log::info('SSLCommerz Cancel Response:', $request->all());
+        
+        $transactionId = $request->input('tran_id');
+        
+        if ($transactionId) {
+            $order = TranscriptRequest::where('transaction_id', $transactionId)->first();
+            if ($order) {
+                $order->update([
+                    'payment_status' => 'cancelled',
+                    'payment_method' => 'sslcommerz'
+                ]);
+            }
+        }
+
         return view('payment.cancel');
     }
 
-    // Step 9: Handle Instant Payment Notification (IPN)
+    // Step 5: Handle Instant Payment Notification (IPN)
     public function paymentIPN(Request $request)
     {
         // Log the incoming request for debugging
-        // \Log::info('SSLCommerz IPN Response:', $request->all());
+        Log::info('SSLCommerz IPN Response:', $request->all());
 
-        // Extract transaction details from the IPN response
         $transactionId = $request->input('tran_id');
-        $paymentStatus = $request->input('status');  // Get payment status (success, failed, etc.)
+        $paymentStatus = $request->input('status');
+        $amount = $request->input('amount');
 
-        // Find the corresponding order in the database
-        $order = TranscriptRequest::find($transactionId);
-        if ($order) {
-            // Update the order with the payment status
-            $order->payment_status = $paymentStatus;
-            $order->save();
+        // Validate the IPN request
+        $isValid = Sslcommerz::validatePayment($request->all(), $transactionId, $amount);
+
+        if ($isValid) {
+            // Find the corresponding order in the database
+            $order = TranscriptRequest::where('transaction_id', $transactionId)->first();
+
+            if ($order) {
+                // Map SSLCommerz status to your application status
+                $status = 'pending';
+                switch ($paymentStatus) {
+                    case 'VALID':
+                        $status = 'paid';
+                        break;
+                    case 'FAILED':
+                        $status = 'failed';
+                        break;
+                    case 'CANCELLED':
+                        $status = 'cancelled';
+                        break;
+                }
+
+                $order->update([
+                    'payment_status' => $status,
+                    'payment_method' => 'sslcommerz'
+                ]);
+
+                Log::info('IPN processed successfully for transaction: ' . $transactionId);
+            }
         }
 
         // Respond to SSLCommerz (acknowledge receipt of the IPN)

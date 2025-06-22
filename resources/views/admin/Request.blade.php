@@ -1,187 +1,306 @@
+
 {{-- resources/views/admin/requests.blade.php --}}
 @extends('layouts.admin')
 
+@section('title', 'Transcript Requests')
+@section('page-title', 'Transcript Requests Management')
+
+@section('breadcrumb')
+    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Transcript Requests</li>
+@endsection
+
 @section('content')
 <div class="container-fluid">
+    <!-- Filter Section -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-filter mr-2"></i>Filter Requests
+                    </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ route('admin.requests') }}">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="filter_year">Academic Year</label>
+                                    <select name="year" id="filter_year" class="form-control">
+                                        <option value="">All Years</option>
+                                        <option value="1st" {{ request('year') == '1st' ? 'selected' : '' }}>1st Year</option>
+                                        <option value="2nd" {{ request('year') == '2nd' ? 'selected' : '' }}>2nd Year</option>
+                                        <option value="3rd" {{ request('year') == '3rd' ? 'selected' : '' }}>3rd Year</option>
+                                        <option value="4th" {{ request('year') == '4th' ? 'selected' : '' }}>4th Year</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="filter_term">Term</label>
+                                    <select name="term" id="filter_term" class="form-control">
+                                        <option value="">All Terms</option>
+                                        <option value="1st Term" {{ request('term') == '1st Term' ? 'selected' : '' }}>1st Term</option>
+                                        <option value="2nd Term" {{ request('term') == '2nd Term' ? 'selected' : '' }}>2nd Term</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="filter_payment">Payment Status</label>
+                                    <select name="payment_status" id="filter_payment" class="form-control">
+                                        <option value="">All Payments</option>
+                                        <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                        <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
+                                        <option value="failed" {{ request('payment_status') == 'failed' ? 'selected' : '' }}>Failed</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="filter_status">Admin Status</label>
+                                    <select name="admin_status" id="filter_status" class="form-control">
+                                        <option value="">All Status</option>
+                                        <option value="pending" {{ request('admin_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                        <option value="processing" {{ request('admin_status') == 'processing' ? 'selected' : '' }}>Processing</option>
+                                        <option value="approved" {{ request('admin_status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                                        <option value="rejected" {{ request('admin_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="filter_search">Search Student</label>
+                                    <input type="text" name="search" id="filter_search" class="form-control" 
+                                           placeholder="Name or ID" value="{{ request('search') }}">
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Filter
+                                        </button>
+                                        <a href="{{ route('admin.requests') }}" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Clear
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">
                 <i class="fas fa-list mr-2"></i>Transcript Requests Management
             </h3>
+            <div class="card-tools">
+                <span class="badge badge-primary">{{ $requests->total() ?? 0 }} Total Requests</span>
+            </div>
         </div>
         <div class="card-body">
-            {{-- @if(session('success')) --}}
-                {{-- <div class="alert alert-success alert-dismissible fade show"> --}}
-                    {{-- {{ session('success') }} --}}
-                    {{-- <button type="button" class="close" data-dismiss="alert">&times;</button> --}}
-                {{-- </div> --}}
-            {{-- @endif --}}
-
-            {{-- @if($requests->isEmpty()) --}}
-                <div class="text-center py-5">
-                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                    <h5>No Requests Found</h5>
-                    <p class="text-muted">No transcript requests have been submitted yet.</p>
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show">
+                    {{ session('success') }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
                 </div>
-            {{-- @else --}}
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show">
+                    {{ session('error') }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            @endif
+
+            @if(isset($requests) && $requests->count() > 0)
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped">
-                        <thead>
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead class="table-dark">
                             <tr>
+                                <th>Request ID</th>
                                 <th>Student Name</th>
                                 <th>Student ID</th>
                                 <th>Academic Year</th>
                                 <th>Term</th>
+                                <th>Amount</th>
                                 <th>Payment Status</th>
-                                <th>Status</th>
+                                <th>Admin Status</th>
                                 <th>Request Date</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {{-- @foreach($requests as $request) --}}
+                            @foreach($requests as $request)
                                 <tr>
-                                    <td>{{-- {{ $request->user->name }} --}}</td>
-                                    <td>{{-- {{ $request->user->student_id ?? 'N/A' }} --}}</td>
-                                    <td>{{-- {{ $request->academic_year }} --}}</td>
-                                    <td>{{-- {{ $request->term }} --}}</td>
+                                    <td><strong>#{{ str_pad($request->id, 5, '0', STR_PAD_LEFT) }}</strong></td>
                                     <td>
-                                        <span class="badge {{-- {{ $request->payment_status_badge }} --}}">
-                                            {{-- {{ ucfirst($request->payment_status) }} --}}
+                                        <i class="fas fa-user text-primary mr-1"></i>
+                                        {{ $request->user->name ?? 'N/A' }}
+                                    </td>
+                                    <td>{{ $request->user->student_id ?? 'N/A' }}</td>
+                                    <td>
+                                        <i class="fas fa-calendar-alt text-info mr-1"></i>
+                                        {{ $request->year ?? $request->academic_year ?? 'N/A' }}
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-book text-info mr-1"></i>
+                                        {{ $request->term ?? 'N/A' }}
+                                    </td>
+                                    <td>
+                                        <strong>৳{{ number_format($request->amount ?? 0, 2) }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="text-success font-weight-bold">
+                                            @if($request->payment_status === 'paid')
+                                                <i class="fas fa-check-circle"></i> Paid
+                                            @elseif($request->payment_status === 'pending')
+                                                <i class="fas fa-clock"></i> Pending
+                                            @elseif($request->payment_status === 'failed')
+                                                <i class="fas fa-times-circle"></i> Failed
+                                            @else
+                                                <i class="fas fa-question-circle"></i> Unknown
+                                            @endif
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge {{-- {{ $request->status_badge }} --}}">
-                                            {{-- {{ ucfirst($request->status) }} --}}
+                                        <span class="text-success font-weight-bold">
+                                            @if($request->admin_status === 'approved')
+                                                <i class="fas fa-check"></i> Approved
+                                            @elseif($request->admin_status === 'pending')
+                                                <i class="fas fa-hourglass-half"></i> Pending
+                                            @elseif($request->admin_status === 'processing')
+                                                <i class="fas fa-cog fa-spin"></i> Processing
+                                            @elseif($request->admin_status === 'rejected')
+                                                <i class="fas fa-times"></i> Rejected
+                                            @else
+                                                <i class="fas fa-question"></i> Not Reviewed
+                                            @endif
                                         </span>
                                     </td>
-                                    <td>{{-- {{ $request->created_at->format('M d, Y') }} --}}</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ $request->created_at->format('M d, Y') }}<br>
+                                            {{ $request->created_at->format('h:i A') }}
+                                        </small>
+                                    </td>
                                     <td>
                                         <div class="btn-group" role="group">
+                                            <!-- View Details -->
                                             <button type="button" class="btn btn-sm btn-info" 
-                                                    data-toggle="modal" data-target="#statusModal{{-- {{ $request->id }} --}}">
-                                                <i class="fas fa-edit"></i> Status
+                                                    data-toggle="modal" data-target="#detailModal{{ $request->id }}"
+                                                    title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+
+                                            <!-- Update Status -->
+                                            <button type="button" class="btn btn-sm btn-warning" 
+                                                    data-toggle="modal" data-target="#statusModal{{ $request->id }}"
+                                                    title="Update Status">
+                                                <i class="fas fa-edit"></i>
                                             </button>
                                             
-                                            {{-- @if($request->payment_status === 'paid') --}}
+                                            <!-- Upload Transcript (only for paid requests) -->
+                                            @if($request->payment_status === 'paid')
                                                 <button type="button" class="btn btn-sm btn-success" 
-                                                        data-toggle="modal" data-target="#uploadModal{{-- {{ $request->id }} --}}">
-                                                    <i class="fas fa-upload"></i> Upload
+                                                        data-toggle="modal" data-target="#uploadModal{{ $request->id }}"
+                                                        title="Upload Transcript">
+                                                    <i class="fas fa-upload"></i>
                                                 </button>
-                                            {{-- @endif --}}
+                                            @endif
+
+                                            <!-- Download Transcript (if exists) -->
+                                            @if($request->result_file && file_exists(storage_path('app/' . $request->result_file)))
+                                                <a href="{{ route('admin.download-transcript', $request->id) }}" 
+                                                   class="btn btn-sm btn-primary"
+                                                   title="Download Transcript">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
 
-                                {{-- Status Update Modal --}}
-                                <div class="modal fade" id="statusModal{{-- {{ $request->id }} --}}" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form method="POST" action="{{-- {{ route('admin.update-status', $request->id) }} --}}">
-                                                {{-- @csrf --}}
-                                                {{-- @method('PUT') --}}
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Update Request Status</h5>
-                                                    <button type="button" class="close" data-dismiss="modal">
-                                                        <span>&times;</span>
-                                                    </button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="form-group">
-                                                        <label>Student: {{-- {{ $request->user->name }} --}}</label>
-                                                        <br><small class="text-muted">{{-- {{ $request->academic_year }} --}} - {{-- {{ $request->term }} --}}</small>
-                                                    </div>
-                                                    
-                                                    <div class="form-group">
-                                                        <label for="status">Status</label>
-                                                        <select name="status" class="form-control" required>
-                                                            <option value="pending" {{-- {{ $request->status === 'pending' ? 'selected' : '' }} --}}>Pending</option>
-                                                            <option value="processing" {{-- {{ $request->status === 'processing' ? 'selected' : '' }} --}}>Processing</option>
-                                                            <option value="completed" {{-- {{ $request->status === 'completed' ? 'selected' : '' }} --}}>Completed</option>
-                                                            <option value="rejected" {{-- {{ $request->status === 'rejected' ? 'selected' : '' }} --}}>Rejected</option>
-                                                        </select>
-                                                    </div>
-                                                    
-                                                    <div class="form-group">
-                                                        <label for="admin_notes">Admin Notes (Optional)</label>
-                                                        <textarea name="admin_notes" class="form-control" rows="3" 
-                                                                placeholder="Add any notes for the student...">{{-- {{ $request->admin_notes }} --}}</textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                                    <button type="submit" class="btn btn-primary">Update Status</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+                                <!-- Detail Modal -->
+                                @include('admin.modals.request-detail', ['request' => $request])
 
-                                {{-- Upload Transcript Modal --}}
-                                {{-- @if($request->payment_status === 'paid') --}}
-                                <div class="modal fade" id="uploadModal{{-- {{ $request->id }} --}}" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form method="POST" action="{{-- {{ route('admin.upload-transcript', $request->id) }} --}}" enctype="multipart/form-data">
-                                                {{-- @csrf --}}
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Upload Transcript</h5>
-                                                    <button type="button" class="close" data-dismiss="modal">
-                                                        <span>&times;</span>
-                                                    </button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="form-group">
-                                                        <label>Student: {{-- {{ $request->user->name }} --}}</label>
-                                                        <br><small class="text-muted">{{-- {{ $request->academic_year }} --}} - {{-- {{ $request->term }} --}}</small>
-                                                    </div>
-                                                    
-                                                    {{-- @if($request->transcript_file) --}}
-                                                        <div class="alert alert-info">
-                                                            <i class="fas fa-info-circle mr-2"></i>
-                                                            A transcript has already been uploaded. Uploading a new file will replace the existing one.
-                                                        </div>
-                                                    {{-- @endif --}}
-                                                    
-                                                    <div class="form-group">
-                                                        <label for="transcript">Transcript File (PDF only)</label>
-                                                        <input type="file" name="transcript" class="form-control-file" accept=".pdf" required>
-                                                        <small class="form-text text-muted">Maximum file size: 10MB</small>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                                    <button type="submit" class="btn btn-success">
-                                                        <i class="fas fa-upload mr-2"></i>Upload Transcript
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                                {{-- @endif --}}
-                            {{-- @endforeach --}}
+                                <!-- Status Update Modal -->
+                                @include('admin.modals.status-update', ['request' => $request])
+
+                                <!-- Upload Transcript Modal -->
+                                @if($request->payment_status === 'paid')
+                                    @include('admin.modals.upload-transcript', ['request' => $request])
+                                @endif
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
-                
-                <div class="d-flex justify-content-center mt-4">
-                    {{-- {{ $requests->links() }} --}}
+
+                @if($requests->hasPages())
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div>
+                            <small class="text-muted">
+                                Showing {{ $requests->firstItem() }} to {{ $requests->lastItem() }} 
+                                of {{ $requests->total() }} requests
+                            </small>
+                        </div>
+                        <div>
+                            {{ $requests->appends(request()->query())->links() }}
+                        </div>
+                    </div>
+                @endif
+            @else
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5>No Requests Found</h5>
+                    <p class="text-muted">
+                        @if(request()->hasAny(['year', 'term', 'payment_status', 'admin_status', 'search']))
+                            No transcript requests match your filter criteria.
+                        @else
+                            No transcript requests have been submitted yet.
+                        @endif
+                    </p>
+                    @if(request()->hasAny(['year', 'term', 'payment_status', 'admin_status', 'search']))
+                        <a href="{{ route('admin.requests') }}" class="btn btn-primary">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </a>
+                    @endif
                 </div>
-            {{-- @endif --}}
+            @endif
         </div>
     </div>
 </div>
 
-{{-- Custom CSS for better styling --}}
+@endsection
+
+@push('styles')
 <style>
 .table th {
     background-color: #f8f9fa;
     font-weight: 600;
+    border-top: none;
 }
 
-.badge {
-    font-size: 0.875em;
+.text-success {
+    color: #28a745 !important;
 }
 
 .btn-group .btn {
@@ -192,5 +311,20 @@
     background-color: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
 }
+
+/* Hide pagination arrows */
+.pagination .page-item:first-child .page-link,
+.pagination .page-item:last-child .page-link {
+    display: none;
+}
+
+.fa-spin {
+    animation: fa-spin 2s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>
-@endsection
+@endpush

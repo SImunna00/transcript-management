@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
+use App\Models\TranscriptRequest;
 class studentController extends Controller
 {
        public function profile()
@@ -78,8 +79,70 @@ class studentController extends Controller
     {
         return view('student.result');
     }
-     public function view_Result()
+ 
+
+public function viewResult(Request $request)
     {
-        return view('student.view-result');
+        $query = TranscriptRequest::where('user_id', Auth::id())
+                                 ->orderBy('created_at', 'desc');
+
+        // Apply filters if provided
+        if ($request->filled('year')) {
+            $query->where('year', $request->year);
+        }
+
+        if ($request->filled('term')) {
+            $query->where('term', $request->term);
+        }
+
+        if ($request->filled('status')) {
+            $status = $request->status;
+            $query->where(function($q) use ($status) {
+                $q->where('payment_status', $status)
+                  ->orWhere('admin_status', $status);
+            });
+        }
+
+        $requests = $query->paginate(10);
+
+        return view('student.view-result', compact('requests'));
     }
+
+    /**
+     * Download approved result file
+     */
+    public function downloadResult($id)
+    {
+        $request = TranscriptRequest::where('user_id', Auth::id())
+                                   ->where('id', $id)
+                                   ->where('admin_status', 'approved')
+                                   ->where('payment_status', 'paid')
+                                   ->firstOrFail();
+
+        if (!$request->result_file || !file_exists(storage_path('app/' . $request->result_file))) {
+            abort(404, 'Result file not found');
+        }
+
+        return response()->download(
+            storage_path('app/' . $request->result_file),
+            'transcript_' . $request->year . '_' . $request->term . '.pdf'
+        );
+    }
+
+    /**
+     * Delete unpaid transcript request
+     */
+    public function deleteRequest($id)
+    {
+        $request = TranscriptRequest::where('user_id', Auth::id())
+                                   ->where('id', $id)
+                                   ->where('payment_status', '!=', 'paid')
+                                   ->firstOrFail();
+
+        $request->delete();
+
+        return redirect()->route('student.viewResult')
+                        ->with('success', 'Request deleted successfully!');
+    }
+
 }
