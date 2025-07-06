@@ -21,7 +21,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
         'payment_status',
         'payment_method',
         'transaction_id',
+        'result_file',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
 

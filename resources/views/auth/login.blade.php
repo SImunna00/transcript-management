@@ -1,6 +1,14 @@
 <x-guest-layout>
     <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+
+       
+
+       
+        @if (session('status'))
+            <div class="mb-4 font-medium text-sm text-green-600">
+                {{ session('status') }}
+            </div>
+        @endif
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
@@ -10,6 +18,7 @@
             <x-input-label for="email" :value="__('Email')" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <p class="text-xs text-gray-500 mt-1">Only NSTU student emails (@student.nstu.edu.bd) are accepted</p>
         </div>
 
         <!-- Password -->
@@ -49,4 +58,6 @@
             </x-primary-button>
         </div>
     </form>
+
+ 
 </x-guest-layout>

@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use App\Models\EmailOtp;
+use App\Mail\EmailVerification;
+use Illuminate\Support\Facades\Mail;
+
 
 class RegisteredUserController extends Controller
 {
@@ -27,26 +31,40 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-   public function store(Request $request): RedirectResponse
-{
-    $request->validate([
-        'name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-        'studentid' => ['required', 'string', 'max:255', 'unique:users'],  // Add validation for studentid
-        'password' => ['required', 'confirmed', Rules\Password::defaults()],
-    ]);
+    public function store(Request $request): RedirectResponse
+    {
+        $request->validate(
+            [
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class, 'regex:/^[a-zA-Z0-9._%+-]+@student\.nstu\.edu\.bd$/'],
+                'studentid' => ['required', 'string', 'max:255', 'unique:users'],  // Add validation for studentid
+                'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            ],
+            [
+                'email.regex' => 'Only NSTU student emails (@student.nstu.edu.bd) are allowed.',
+                'studentid.unique' => 'This student ID is already registered.',
+            ]
+        );
 
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'studentid' => $request->studentid,  // Store the studentid
-        'password' => Hash::make($request->password),
-    ]);
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'studentid' => $request->studentid,  // Store the studentid
+            'password' => Hash::make($request->password),
+        ]);
 
-    event(new Registered($user));
+        $otp = EmailOtp::generateOtp($user->email);
 
-    Auth::login($user);
-    return redirect()->route('student.dashboard');
+        try {
+            Mail::to($user->email)->send(new EmailVerification($otp));
+        } catch (\Exception $e) {
+            \Log::error('Failed to send OTP email: ' . $e->getMessage());
+        }
+
+        event(new Registered($user));
+        Auth::login($user);
+
+        return redirect()->route('verification.notice');
+    }
+
 }
-
-}  
