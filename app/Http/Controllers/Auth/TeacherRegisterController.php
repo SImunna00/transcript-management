@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Teacher;
+use App\Models\Department;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,8 +34,9 @@ class TeacherRegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:teachers'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'department' => ['nullable', 'string', 'max:100'],
+            'department' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
+            
         ]);
 
         $teacher = Teacher::create([
@@ -43,12 +45,15 @@ class TeacherRegisterController extends Controller
             'password' => Hash::make($request->password),
             'department' => $request->department,
             'phone' => $request->phone,
+            
         ]);
 
         event(new Registered($teacher));
 
+        // Authenticate the teacher
         Auth::guard('teacher')->login($teacher);
 
-        return redirect(route('teacher.dashboard'));
+        // Use direct URL redirection to avoid any routing issues
+        return redirect(url('/teacher/dashboard'));
     }
 }

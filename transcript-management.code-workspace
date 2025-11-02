@@ -1,0 +1,54 @@
+{
+    "folders": [
+        {
+            "name": "📁 Transcript Management",
+            "path": "."
+        }
+    ],
+    "settings": {
+        "workbench.colorCustomizations": {
+            "activityBar.background": "#1E5595",
+            "titleBar.activeBackground": "#1E5595",
+            "titleBar.activeForeground": "#FFFFFF"
+        },
+        "explorer.fileNesting.enabled": true,
+        "explorer.fileNesting.patterns": {
+            "*.blade.php": "${capture}.*.blade.php",
+            "*.php": "${capture}.php.bak, ${capture}.test.php",
+            "composer.json": "composer.lock, composer.*.json",
+            "package.json": "package-lock.json, yarn.lock"
+        }
+    },
+    "launch": {
+        "configurations": [],
+        "compounds": []
+    },
+    "extensions": {
+        "recommendations": [
+            "bmewburn.vscode-intelephense-client",
+            "onecentlin.laravel-blade",
+            "amiralizadeh9480.laravel-extra-intellisense",
+            "mohamedbenhida.laravel-intellisense",
+            "alefragnani.project-manager",
+            "alefragnani.bookmarks"
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "Open File Explorer",
+                "type": "shell",
+                "command": "start .",
+                "windows": {
+                    "command": "explorer ."
+                },
+                "group": "none",
+                "presentation": {
+                    "reveal": "silent",
+                    "panel": "shared"
+                }
+            }
+        ]
+    }
+}

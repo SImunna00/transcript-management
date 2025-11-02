@@ -4,17 +4,18 @@ use App\Http\Controllers\Auth\TeacherLoginController;
 use App\Http\Controllers\Auth\TeacherRegisterController;
 use Illuminate\Support\Facades\Route;
 
-// Teacher auth routes
-Route::middleware('guest:teacher')->prefix('teacher')->name('teacher.')->group(function () {
+// Direct teacher auth routes without nesting or prefixes
+Route::middleware(['web', 'guest:teacher'])->group(function () {
     // Login routes
-    Route::get('login', [TeacherLoginController::class, 'create'])->name('login');
-    Route::post('login', [TeacherLoginController::class, 'store']);
+    Route::get('/teacher/login', [TeacherLoginController::class, 'create'])->name('teacher.login');
+    Route::post('/teacher/login', [TeacherLoginController::class, 'store'])->name('teacher.login.store');
 
     // Registration routes
-    Route::get('register', [TeacherRegisterController::class, 'create'])->name('register');
-    Route::post('register', [TeacherRegisterController::class, 'store']);
+    Route::get('/teacher/register', [TeacherRegisterController::class, 'create'])->name('teacher.register');
+    Route::post('/teacher/register', [TeacherRegisterController::class, 'store'])->name('teacher.register.store');
 });
 
-Route::middleware('auth:teacher')->prefix('teacher')->name('teacher.')->group(function () {
-    Route::post('logout', [TeacherLoginController::class, 'destroy'])->name('logout');
+// Teacher logout route
+Route::middleware(['web', 'auth:teacher'])->group(function () {
+    Route::post('/teacher/logout', [TeacherLoginController::class, 'destroy'])->name('teacher.logout');
 });

@@ -55,6 +55,31 @@
                                 @enderror
                             </div>
 
+                          
+
+                            <!-- Student ID Field -->
+                            <div class="mb-4">
+                                <label for="studentid" class="form-label fw-bold">Student ID</label>
+                                <input type="text" name="studentid" class="form-control @error('studentid') is-invalid @enderror"
+                                    value="{{ auth()->user()->studentid }}" placeholder="Enter your student ID" />
+                                @error('studentid')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Session Field -->
+                            <div class="mb-4">
+                                <label for="session" class="form-label fw-bold">Session</label>
+                                <input type="text" name="session" class="form-control @error('session') is-invalid @enderror"
+                                    value="{{ auth()->user()->session }}" placeholder="Enter your session" />
+                                @error('session')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+
+                      
+
                             <!-- Profile Image Field -->
                             <div class="mb-4">
                                 <label for="photo" class="form-label fw-bold">Profile Photo</label>

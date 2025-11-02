@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Course;
 use App\Models\User;
-use App\Models\Result;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Semester;
+use App\Models\TheoryMark;
+use App\Models\LabMark;
+use App\Models\SpecialMark;
 
 class TeacherController extends Controller
 {
@@ -17,255 +18,177 @@ class TeacherController extends Controller
      */
     public function dashboard()
     {
-        $teacher = Auth::guard('teacher')->user();
-
+        // Use dummy data
         $stats = [
-            'total_courses' => $teacher->courses()->count(),
-            'current_courses' => $teacher->courses()
-                ->wherePivot('academic_year', date('Y'))
-                ->count(),
-            'total_students' => User::whereHas('courses', function ($query) use ($teacher) {
-                $query->whereIn('course_id', $teacher->courses()->pluck('courses.id'));
-            })->count(),
-            'pending_marks' => Result::where('submitted_by', $teacher->id)
-                ->where('approved', false)
-                ->count(),
+            "total_courses" => 5,
+            "current_courses" => 3,
+            "total_students" => 120,
+            "pending_marks" => 15,
         ];
 
-        $recent_results = Result::with(['user', 'course'])
-            ->where('submitted_by', $teacher->id)
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+        $recent_results = [];
 
-        return view('teacher.dashboard', compact('stats', 'recent_results'));
+        return view("teacher.dashboard", compact("stats", "recent_results"));
     }
 
     /**
-     * Show teacher's assigned courses for specific year and term
+     * Show teacher"s assigned courses for specific year and term
      */
-    public function courses(Request $request)
-    {
-        $teacher = Auth::guard('teacher')->user();
-
-        // Get available academic years and terms from the teacher's courses
-        $academicYears = $teacher->courses()
-            ->orderBy('academic_year', 'desc')
-            ->pluck('academic_year')
-            ->unique();
-
-        $terms = $teacher->courses()
-            ->orderBy('term', 'asc')
-            ->pluck('term')
-            ->unique();
-
-        // Get selected year and term (default to the latest)
-        $selectedYear = $request->input('year', $academicYears->first());
-        $selectedTerm = $request->input('term', $terms->first());
-
-        // Get assigned courses for the selected year and term
-        $courses = $teacher->courses()
-            ->wherePivot('academic_year', $selectedYear)
-            ->wherePivot('term', $selectedTerm)
-            ->withCount([
-                'students' => function ($query) use ($selectedYear, $selectedTerm) {
-                    $query->wherePivot('academic_year', $selectedYear)
-                        ->wherePivot('term', $selectedTerm);
-                }
-            ])
-            ->get();
-
-        return view('teacher.courses', compact(
-            'courses',
-            'academicYears',
-            'terms',
-            'selectedYear',
-            'selectedTerm'
-        ));
-    }
-
-    /**
-     * Show students enrolled in a specific course
-     */
-    public function courseStudents(Request $request, $courseId)
-    {
-        $teacher = Auth::guard('teacher')->user();
-
-        // Validate that the teacher is assigned to this course
-        $course = $teacher->courses()->findOrFail($courseId);
-
-        // Get the academic year and term from the pivot table
-        $academicYear = $request->input('year');
-        $term = $request->input('term');
-
-        // Get enrolled students with their result status
-        $students = $course->students()
-            ->wherePivot('academic_year', $academicYear)
-            ->wherePivot('term', $term)
-            ->withCount([
-                'results' => function ($query) use ($courseId, $academicYear, $term) {
-                    $query->where('course_id', $courseId)
-                        ->where('academic_year', $academicYear)
-                        ->where('term', $term);
-                }
-            ])
-            ->get()
-            ->map(function ($student) use ($courseId, $academicYear, $term) {
-                $result = $student->results()
-                    ->where('course_id', $courseId)
-                    ->where('academic_year', $academicYear)
-                    ->where('term', $term)
-                    ->first();
-
-                $student->has_result = (bool) $result;
-                $student->result = $result;
-                return $student;
-            });
-
-        return view('teacher.course-students', compact(
-            'course',
-            'students',
-            'academicYear',
-            'term'
-        ));
-    }
-
-    /**
-     * Show form to input marks for a student
-     */
-    public function createMarkEntry($courseId, $studentId, Request $request)
-    {
-        $teacher = Auth::guard('teacher')->user();
-
-        // Validate teacher is assigned to this course
-        $course = $teacher->courses()->findOrFail($courseId);
-
-        // Get the student
-        $student = User::findOrFail($studentId);
-
-        // Get academic year and term
-        $academicYear = $request->input('year');
-        $term = $request->input('term');
-
-        // Check if result already exists
-        $result = Result::where('user_id', $studentId)
-            ->where('course_id', $courseId)
-            ->where('academic_year', $academicYear)
-            ->where('term', $term)
-            ->first();
-
-        return view('teacher.mark-entry', compact(
-            'course',
-            'student',
-            'academicYear',
-            'term',
-            'result'
-        ));
-    }
 
     /**
      * Store marks for a student
      */
-    public function storeMarkEntry(Request $request, $courseId, $studentId)
+
+    public function storeMarkEntry(Request $request)
     {
-        $teacher = Auth::guard('teacher')->user();
+        // Get the form data
+        $courseId = $request->input('course_id');
+        $academicYearId = $request->input('academic_year_id');
+        $termId = $request->input('term_id');
+        $courseType = $request->input('course_type', 'theory');
 
-        // Validate teacher is assigned to this course
-        $course = $teacher->courses()->findOrFail($courseId);
-        $student = User::findOrFail($studentId);
+        // Get student IDs array
+        $studentIds = $request->input('student_ids', []);
 
-        // Validate the input
-        $validated = $request->validate([
-            'attendance' => 'required|numeric|min:0|max:10',
-            'class_test' => 'required|numeric|min:0|max:15',
-            'mid_term' => 'required|numeric|min:0|max:25',
-            'final' => 'required|numeric|min:0|max:40',
-            'viva' => 'required|numeric|min:0|max:10',
-            'academic_year' => 'required|string',
-            'term' => 'required|string',
-        ]);
-
-        // Find or create result
-        $result = Result::firstOrNew([
-            'user_id' => $studentId,
+        // Debug: Log the received data
+        \Log::info('Mark Entry Debug:', [
             'course_id' => $courseId,
-            'academic_year' => $validated['academic_year'],
-            'term' => $validated['term'],
+            'academic_year_id' => $academicYearId,
+            'term_id' => $termId,
+            'course_type' => $courseType,
+            'student_ids' => $studentIds,
+            'request_data' => $request->all()
         ]);
 
-        // Fill in the marks
-        $result->fill([
-            'attendance' => $validated['attendance'],
-            'class_test' => $validated['class_test'],
-            'mid_term' => $validated['mid_term'],
-            'final' => $validated['final'],
-            'viva' => $validated['viva'],
-            'submitted_by' => $teacher->id,
-        ]);
+        $totalSaved = 0;
+        $errors = [];
 
-        // Calculate grade and grade point
-        $result->calculateGrade();
+        // Process each student's marks
+        foreach ($studentIds as $studentId) {
+            try {
+                // Get the student's session
+                $student = User::find($studentId);
+                if (!$student) {
+                    $errors[] = "Student with ID {$studentId} not found.";
+                    continue;
+                }
+                $session = $student->session ?? '2023-2024';
 
-        // Generate PDF and save
-        $pdf = $this->generateResultPDF($result);
+                if ($courseType === 'theory') {
+                    $attendance = $request->input("attendance.{$studentId}", 0);
+                    $ct = $request->input("ct_marks.{$studentId}", 0);
+                    $semester = $request->input("semester.{$studentId}", 0);
+                    $total = $attendance + $ct + $semester;
 
-        // Save PDF to storage
-        $filePath = 'results/' . $result->academic_year . '/' . $result->term . '/';
-        $fileName = 'result_' . $student->studentid . '_' . $course->course_code . '.pdf';
+                    \Log::info("Theory marks for student {$studentId}:", [
+                        'attendance' => $attendance,
+                        'ct' => $ct,
+                        'semester' => $semester,
+                        'total' => $total
+                    ]);
 
-        Storage::disk('public')->put($filePath . $fileName, $pdf->output());
+                    list($grade, $gradePoint) = $this->calculateGradeAndPoint($total);
 
-        // Update result with file path
-        $result->result_file = 'public/' . $filePath . $fileName;
-        $result->save();
+                    TheoryMark::updateOrCreate(
+                        ['user_id' => $studentId, 'course_id' => $courseId],
+                        [
+                            'session' => $session,
+                            'academic_year_id' => $academicYearId,
+                            'term_id' => $termId,
+                            'participation' => $attendance,
+                            'ct' => $ct,
+                            'semester_final' => $semester,
+                            'total' => $total,
+                            'grade' => $grade,
+                            'grade_point' => $gradePoint,
+                        ]
+                    );
+                } elseif ($courseType === 'lab') {
+                    $attendance = $request->input("attendance.{$studentId}", 0);
+                    $report = $request->input("report.{$studentId}", 0);
+                    $labWork = $request->input("lab_work.{$studentId}", 0);
+                    $viva = $request->input("viva.{$studentId}", 0);
+                    $total = $attendance + $report + $labWork + $viva;
 
-        return redirect()->route('teacher.courseStudents', [
-            'course' => $courseId,
-            'year' => $validated['academic_year'],
-            'term' => $validated['term'],
-        ])->with('success', 'Marks entered successfully for ' . $student->name);
+                    list($grade, $gradePoint) = $this->calculateGradeAndPoint($total);
+
+                    LabMark::updateOrCreate(
+                        ['user_id' => $studentId, 'course_id' => $courseId],
+                        [
+                            'session' => $session,
+                            'academic_year_id' => $academicYearId,
+                            'term_id' => $termId,
+                            'attendance' => $attendance,
+                            'report' => $report,
+                            'lab_work' => $labWork,
+                            'viva' => $viva,
+                            'total' => $total,
+                            'grade' => $grade,
+                            'grade_point' => $gradePoint,
+                        ]
+                    );
+                } else { // special
+                    $total = $request->input("total_mark.{$studentId}", 0);
+
+                    list($grade, $gradePoint) = $this->calculateGradeAndPoint($total);
+
+                    SpecialMark::updateOrCreate(
+                        ['user_id' => $studentId, 'course_id' => $courseId],
+                        [
+                            'session' => $session,
+                            'academic_year_id' => $academicYearId,
+                            'term_id' => $termId,
+                            'full_marks' => $total,
+                            'grade' => $grade,
+                            'grade_point' => $gradePoint,
+                        ]
+                    );
+                }
+
+                $totalSaved++;
+            } catch (\Exception $e) {
+                $errorMsg = "Error processing student ID {$studentId}: " . $e->getMessage();
+                $errors[] = $errorMsg;
+                \Log::error($errorMsg, ['exception' => $e]);
+            }
+        }
+
+        $message = $totalSaved > 0
+            ? "{$totalSaved} student marks saved successfully."
+            : "No marks were saved.";
+
+        if (!empty($errors)) {
+            $message .= " There were " . count($errors) . " errors.";
+            \Log::error('Mark Entry Errors:', $errors);
+        }
+
+        $status = $totalSaved > 0 ? 'success' : 'error';
+
+        return redirect()->back()->with($status, $message);
     }
 
-    /**
-     * Generate result PDF for a student
-     */
-    private function generateResultPDF(Result $result)
+
+    public function calculateGradeAndPoint($total)
     {
-        $student = $result->user;
-        $course = $result->course;
-        $teacher = $result->teacher;
-
-        // Get all results for the student in the same term/year
-        $allResults = Result::with('course')
-            ->where('user_id', $student->id)
-            ->where('academic_year', $result->academic_year)
-            ->where('term', $result->term)
-            ->get();
-
-        // Calculate TGPA (Term Grade Point Average)
-        $totalCredits = $allResults->sum(function ($result) {
-            return $result->course->credits;
-        });
-
-        $weightedGP = $allResults->sum(function ($result) {
-            return $result->grade_point * $result->course->credits;
-        });
-
-        $tgpa = $totalCredits > 0 ? $weightedGP / $totalCredits : 0;
-
-        // Generate PDF
-        $data = [
-            'student' => $student,
-            'course' => $course,
-            'result' => $result,
-            'teacher' => $teacher,
-            'allResults' => $allResults,
-            'tgpa' => $tgpa,
-            'totalCredits' => $totalCredits,
-            'print_date' => now()->format('F d, Y'),
-        ];
-
-        return PDF::loadView('pdf.result', $data);
+        if ($total >= 80)
+            return ['A+', 4.00];
+        if ($total >= 75)
+            return ['A', 3.75];
+        if ($total >= 70)
+            return ['A-', 3.50];
+        if ($total >= 65)
+            return ['B+', 3.25];
+        if ($total >= 60)
+            return ['B', 3.00];
+        if ($total >= 55)
+            return ['B-', 2.75];
+        if ($total >= 50)
+            return ['C+', 2.50];
+        if ($total >= 45)
+            return ['C', 2.00];
+        if ($total >= 40)
+            return ['D', 1.00];
+        return ['F', 0.00];
     }
 
     /**
@@ -273,50 +196,17 @@ class TeacherController extends Controller
      */
     public function viewAllResults(Request $request)
     {
-        $teacher = Auth::guard('teacher')->user();
+        // Just return an empty view with dummy data
+        $results = collect([]);
+        $academicYears = collect(["2024", "2025"]);
+        $terms = collect(["Fall", "Spring", "Summer"]);
+        $courses = collect([]);
 
-        $query = Result::with(['user', 'course'])
-            ->where('submitted_by', $teacher->id);
-
-        // Apply filters if provided
-        if ($request->filled('year')) {
-            $query->where('academic_year', $request->year);
-        }
-
-        if ($request->filled('term')) {
-            $query->where('term', $request->term);
-        }
-
-        if ($request->filled('course')) {
-            $query->where('course_id', $request->course);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('approved', $request->status === 'approved');
-        }
-
-        $results = $query->orderBy('created_at', 'desc')->paginate(20);
-
-        // Get filter options
-        $academicYears = Result::where('submitted_by', $teacher->id)
-            ->select('academic_year')
-            ->distinct()
-            ->pluck('academic_year');
-
-        $terms = Result::where('submitted_by', $teacher->id)
-            ->select('term')
-            ->distinct()
-            ->pluck('term');
-
-        $courses = Course::whereHas('results', function ($query) use ($teacher) {
-            $query->where('submitted_by', $teacher->id);
-        })->get();
-
-        return view('teacher.all-results', compact(
-            'results',
-            'academicYears',
-            'terms',
-            'courses'
+        return view("teacher.all-results", compact(
+            "results",
+            "academicYears",
+            "terms",
+            "courses"
         ));
     }
 
@@ -325,16 +215,119 @@ class TeacherController extends Controller
      */
     public function previewResultPDF($resultId)
     {
-        $teacher = Auth::guard('teacher')->user();
+        // Just return a response with a dummy message
+        return response("PDF preview not available in demo mode.", 200);
+    }
 
-        $result = Result::where('id', $resultId)
-            ->where('submitted_by', $teacher->id)
-            ->firstOrFail();
+    /**
+     * Display mark entry form
+     */
+    public function markEntryForm()
+    {
+        $sessions = ['2023-2024', '2024-2025', '2025-2026']; // Adjust based on your needs
+        return view('teacher.mark-entry-form', compact('sessions'));
+    }
 
-        if (!$result->result_file || !Storage::exists($result->result_file)) {
-            abort(404, 'Result PDF not found');
+    /**
+     * Search for student by ID or name
+     */
+    public function searchStudent(Request $request)
+    {
+        $request->validate([
+            'search' => 'required|string',
+            'session' => 'required|string'
+        ]);
+
+        $search = $request->input('search');
+        $session = $request->input('session');
+
+        // Search by student ID or name
+        $students = User::where('session', $session)
+            ->where(function ($query) use ($search) {
+                $query->where('studentid', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%");
+            })
+            ->get();
+
+        return view('teacher.student-search-results', compact('students', 'session', 'search'));
+    }
+
+    /**
+     * Display student marks form
+     */
+    public function studentMarks(User $student)
+    {
+        // Get courses for which the teacher can enter marks
+        $courses = Course::all(); // In a real app, filter by teacher's department
+
+        // Get existing marks for this student
+        $theoryMarks = $student->theoryMarks;
+        $labMarks = $student->labMarks;
+
+        return view('teacher.student-marks', compact('student', 'courses', 'theoryMarks', 'labMarks'));
+    }
+
+    /**
+     * Save student marks
+     */
+    public function saveMarks(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required|exists:users,id',
+            'course_id' => 'required',
+            'session' => 'required|string',
+            'marks' => 'required|array',
+            'marks.theory.*' => 'nullable|numeric|min:0|max:100',
+            'marks.lab.*' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        $studentId = $request->input('student_id');
+        $courseId = $request->input('course_id');
+        $session = $request->input('session');
+        $marks = $request->input('marks');
+
+        // Instead of querying the database for the course, use the course_type from the form
+        $courseType = $request->input('course_type', 'theory');
+
+        // Process theory marks
+        if (isset($marks['theory'])) {
+            $theoryMark = \App\Models\TheoryMark::updateOrCreate(
+                [
+                    'user_id' => $studentId,
+                    'course_id' => $courseId,
+                    'academic_year' => $request->input('academic_year', date('Y')),
+                    'term' => $request->input('term', 'Fall'),
+                ],
+                [
+                    'class_test' => $marks['theory']['class_test'] ?? 0,
+                    'attendance' => $marks['theory']['attendance'] ?? 0,
+                    'final_exam' => $marks['theory']['final_exam'] ?? 0,
+                    'total' => array_sum($marks['theory']),
+                    // Grade calculation would happen here in a real app
+                ]
+            );
         }
 
-        return response()->file(Storage::path($result->result_file));
+        // Process lab marks
+        if (isset($marks['lab'])) {
+            $labMark = \App\Models\LabMark::updateOrCreate(
+                [
+                    'user_id' => $studentId,
+                    'course_id' => $courseId,
+                    'academic_year' => $request->input('academic_year', date('Y')),
+                    'term' => $request->input('term', 'Fall'),
+                ],
+                [
+                    'lab_performance' => $marks['lab']['lab_performance'] ?? 0,
+                    'lab_report' => $marks['lab']['lab_report'] ?? 0,
+                    'lab_final' => $marks['lab']['lab_final'] ?? 0,
+                    'total' => array_sum($marks['lab']),
+                    // Grade calculation would happen here in a real app
+                ]
+            );
+        }
+
+        return redirect()->route('teacher.mark.student', $studentId)
+            ->with('success', 'Marks saved successfully');
     }
 }

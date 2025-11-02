@@ -79,7 +79,7 @@
     <div class="login-container">
         <div class="card">
             <div class="card-header">
-                <img src="{{ asset('assests/image/nstu_logo.png') }}" alt="NSTU Logo" class="logo">
+                <img src="{{ asset('assests/image/nstu-logo.png') }}" alt="NSTU Logo" class="logo">
                 <h3>Teacher Login</h3>
 
             </div>

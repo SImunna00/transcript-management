@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Project Quick Access</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, "Helvetica Neue", Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f8f9fa;
+            }
+            h1 {
+                color: #1e5595;
+                border-bottom: 2px solid #1e5595;
+                padding-bottom: 10px;
+                margin-bottom: 30px;
+            }
+            .folder-section {
+                margin-bottom: 30px;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+            .folder-section h2 {
+                background: #f1f3f5;
+                margin: 0;
+                padding: 15px 20px;
+                font-size: 1.3rem;
+                color: #212529;
+                border-bottom: 1px solid #dee2e6;
+            }
+            .folder-links {
+                display: flex;
+                flex-wrap: wrap;
+                padding: 15px;
+            }
+            .folder-link {
+                display: block;
+                width: calc(50% - 20px);
+                margin: 10px;
+                padding: 12px 15px;
+                background: #f8f9fa;
+                border-radius: 6px;
+                text-decoration: none;
+                color: #212529;
+                border: 1px solid #dee2e6;
+                font-size: 0.95rem;
+                transition: all 0.2s;
+                position: relative;
+            }
+            .folder-link:hover {
+                background: #e9ecef;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .folder-link i {
+                margin-right: 10px;
+                color: #1e5595;
+            }
+            .folder-path {
+                font-size: 0.8rem;
+                color: #6c757d;
+                margin-top: 5px;
+                display: block;
+            }
+            .actions {
+                text-align: center;
+                margin: 30px 0;
+            }
+            button {
+                background: #1e5595;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 0 5px;
+                font-size: 0.9rem;
+            }
+            button:hover {
+                background: #164177;
+            }
+            button i {
+                margin-right: 8px;
+            }
+            @media (max-width: 600px) {
+                .folder-link {
+                    width: calc(100% - 20px);
+                }
+            }
+        </style>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+        />
+    </head>
+    <body>
+        <h1>Transcript Management System</h1>
+
+        <div class="folder-section">
+            <h2><i class="fas fa-code"></i> Backend</h2>
+            <div class="folder-links">
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('app/Http/Controllers')"
+                >
+                    <i class="fas fa-server"></i> Controllers
+                    <span class="folder-path">app/Http/Controllers</span>
+                </a>
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('app/Models')"
+                >
+                    <i class="fas fa-database"></i> Models
+                    <span class="folder-path">app/Models</span>
+                </a>
+                <a href="#" class="folder-link" onclick="openFolder('routes')">
+                    <i class="fas fa-route"></i> Routes
+                    <span class="folder-path">routes</span>
+                </a>
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('app/Mail')"
+                >
+                    <i class="fas fa-envelope"></i> Mail Classes
+                    <span class="folder-path">app/Mail</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="folder-section">
+            <h2><i class="fas fa-paint-brush"></i> Frontend</h2>
+            <div class="folder-links">
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('resources/views')"
+                >
+                    <i class="fas fa-file-code"></i> Views
+                    <span class="folder-path">resources/views</span>
+                </a>
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('resources/views/layouts')"
+                >
+                    <i class="fas fa-layer-group"></i> Layouts
+                    <span class="folder-path">resources/views/layouts</span>
+                </a>
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('public/assets/images')"
+                >
+                    <i class="fas fa-images"></i> Images
+                    <span class="folder-path">public/assets/images</span>
+                </a>
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('public/assets/css')"
+                >
+                    <i class="fas fa-file-code"></i> CSS
+                    <span class="folder-path">public/assets/css</span>
+                </a>
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('public/assets/js')"
+                >
+                    <i class="fas fa-file-code"></i> JavaScript
+                    <span class="folder-path">public/assets/js</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="folder-section">
+            <h2><i class="fas fa-database"></i> Database</h2>
+            <div class="folder-links">
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('database/migrations')"
+                >
+                    <i class="fas fa-code-branch"></i> Migrations
+                    <span class="folder-path">database/migrations</span>
+                </a>
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('database/seeders')"
+                >
+                    <i class="fas fa-seedling"></i> Seeders
+                    <span class="folder-path">database/seeders</span>
+                </a>
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFolder('database/factories')"
+                >
+                    <i class="fas fa-industry"></i> Factories
+                    <span class="folder-path">database/factories</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="folder-section">
+            <h2><i class="fas fa-cogs"></i> Configuration</h2>
+            <div class="folder-links">
+                <a href="#" class="folder-link" onclick="openFile('.env')">
+                    <i class="fas fa-lock"></i> Environment (.env)
+                    <span class="folder-path">.env</span>
+                </a>
+                <a href="#" class="folder-link" onclick="openFolder('config')">
+                    <i class="fas fa-cog"></i> Config Files
+                    <span class="folder-path">config</span>
+                </a>
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFile('composer.json')"
+                >
+                    <i class="fab fa-php"></i> Composer
+                    <span class="folder-path">composer.json</span>
+                </a>
+                <a
+                    href="#"
+                    class="folder-link"
+                    onclick="openFile('package.json')"
+                >
+                    <i class="fab fa-npm"></i> NPM
+                    <span class="folder-path">package.json</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button onclick="openFileExplorer()">
+                <i class="fas fa-folder-open"></i>Open File Explorer
+            </button>
+            <button onclick="openBrowser()">
+                <i class="fas fa-globe"></i>Open Web Browser
+            </button>
+            <button onclick="openInVsCode()">
+                <i class="fas fa-code"></i>Open in VS Code
+            </button>
+        </div>
+
+        <div class="folder-section">
+            <h2><i class="fas fa-search"></i> Search Files</h2>
+            <div style="padding: 20px">
+                <form onsubmit="searchFiles(event)">
+                    <div style="display: flex; margin-bottom: 10px">
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Search for files..."
+                            style="
+                                flex: 1;
+                                padding: 8px;
+                                border: 1px solid #ced4da;
+                                border-radius: 4px 0 0 4px;
+                            "
+                        />
+                        <button
+                            type="submit"
+                            style="border-radius: 0 4px 4px 0; margin: 0"
+                        >
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap">
+                        <label style="display: flex; align-items: center">
+                            <input type="checkbox" id="searchPhp" checked />
+                            <span style="margin-left: 5px">.php</span>
+                        </label>
+                        <label style="display: flex; align-items: center">
+                            <input type="checkbox" id="searchBlade" checked />
+                            <span style="margin-left: 5px">.blade.php</span>
+                        </label>
+                        <label style="display: flex; align-items: center">
+                            <input type="checkbox" id="searchJs" />
+                            <span style="margin-left: 5px">.js</span>
+                        </label>
+                        <label style="display: flex; align-items: center">
+                            <input type="checkbox" id="searchCss" />
+                            <span style="margin-left: 5px">.css</span>
+                        </label>
+                        <label style="display: flex; align-items: center">
+                            <input type="checkbox" id="searchImg" />
+                            <span style="margin-left: 5px">images</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            // Helper to construct paths relative to the project root
+            function projectPath(path) {
+                // This assumes the HTML file is in the project root
+                return (
+                    window.location.pathname.replace(/\/[^\/]*$/, "/") + path
+                );
+            }
+
+            // Open folder in Explorer
+            function openFolder(path) {
+                // Using file protocol to open the folder in Explorer
+                window.open(
+                    "file:///" +
+                        window.location.pathname
+                            .split("/")
+                            .slice(0, -1)
+                            .join("/") +
+                        "/" +
+                        path
+                );
+            }
+
+            // Open file in the default application
+            function openFile(path) {
+                // Using file protocol to open the file in the default application
+                window.open(
+                    "file:///" +
+                        window.location.pathname
+                            .split("/")
+                            .slice(0, -1)
+                            .join("/") +
+                        "/" +
+                        path
+                );
+            }
+
+            // Open file explorer at the project root
+            function openFileExplorer() {
+                window.open(
+                    "file:///" +
+                        window.location.pathname
+                            .split("/")
+                            .slice(0, -1)
+                            .join("/")
+                );
+            }
+
+            // Open the project in browser
+            function openBrowser() {
+                window.open(
+                    "http://localhost/projects/transcript-management",
+                    "_blank"
+                );
+            }
+
+            // Open in VS Code using the workspace file
+            function openInVsCode() {
+                // This will open the VS Code workspace if VS Code is configured to handle this protocol
+                window.open(
+                    "vscode://file/" +
+                        window.location.pathname
+                            .split("/")
+                            .slice(0, -1)
+                            .join("/") +
+                        "/transcript-management.code-workspace"
+                );
+            }
+
+            // Search for files with the given name
+            function searchFiles(event) {
+                event.preventDefault();
+                const searchTerm = document.getElementById("searchInput").value;
+                if (!searchTerm) return;
+
+                let query = "?path=&q=" + encodeURIComponent(searchTerm);
+
+                // Add file type filters
+                const filters = [];
+                if (document.getElementById("searchPhp").checked)
+                    filters.push("php");
+                if (document.getElementById("searchBlade").checked)
+                    filters.push("blade.php");
+                if (document.getElementById("searchJs").checked)
+                    filters.push("js");
+                if (document.getElementById("searchCss").checked)
+                    filters.push("css");
+                if (document.getElementById("searchImg").checked)
+                    filters.push("jpg,png,gif,svg");
+
+                if (filters.length > 0) {
+                    query += "&types=" + encodeURIComponent(filters.join(","));
+                }
+
+                window.location.href =
+                    "/projects/transcript-management/public/file-explorer.php" +
+                    query;
+            }
+        </script>
+    </body>
+</html>

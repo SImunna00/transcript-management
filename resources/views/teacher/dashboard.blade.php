@@ -11,7 +11,7 @@
             <div class="col-md-3">
                 <div class="stats-card text-center">
                     <i class="fas fa-book text-primary"></i>
-                    <h3>{{ $stats['total_courses'] }}</h3>
+                    <h3>{{ $stats['total_courses'] }}</h3>`
                     <p>Total Assigned Courses</p>
                 </div>
             </div>
@@ -25,7 +25,7 @@
             <div class="col-md-3">
                 <div class="stats-card text-center">
                     <i class="fas fa-users text-info"></i>
-                    <h3>{{ $stats['total_students'] }}</h3>
+                    <h3>{{ 5 }}</h3>
                     <p>Total Students</p>
                 </div>
             </div>
@@ -50,6 +50,9 @@
                             <a href="{{ route('teacher.courses') }}" class="btn btn-outline-primary">
                                 <i class="fas fa-book me-2"></i> View My Courses
                             </a>
+                            <a href="{{ route('teacher.marks-entry-system') }}" class="btn btn-outline-danger mb-2">
+                                <i class="fas fa-edit me-2"></i> Enter Student Marks
+                            </a>
                             <a href="{{ route('teacher.results') }}" class="btn btn-outline-success">
                                 <i class="fas fa-chart-bar me-2"></i> View All Results
                             </a>
@@ -65,7 +68,7 @@
                     <div class="card-body">
                         <ul class="list-group">
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Mid-term Exams
+                                Year:3 Term:1
                                 <span class="badge bg-primary rounded-pill">15 Jul - 30 Jul</span>
                             </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">

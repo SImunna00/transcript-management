@@ -10,28 +10,21 @@ class Course extends Model
     use HasFactory;
 
     protected $fillable = [
-        'course_code',
-        'title',
+        'course_id',
+        'code',
+        'name',
         'credits',
-        'department',
+        'academic_year_id',
+        'term_id',
     ];
 
-    public function teachers()
+    public function academicYear()
     {
-        return $this->belongsToMany(Teacher::class, 'teacher_course')
-            ->withPivot('academic_year', 'term')
-            ->withTimestamps();
+        return $this->belongsTo(AcademicYear::class);
     }
 
-    public function students()
+    public function term()
     {
-        return $this->belongsToMany(User::class, 'course_enrollments')
-            ->withPivot('academic_year', 'term')
-            ->withTimestamps();
-    }
-
-    public function results()
-    {
-        return $this->hasMany(Result::class);
+        return $this->belongsTo(Term::class);
     }
 }

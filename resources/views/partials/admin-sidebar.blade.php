@@ -4,15 +4,11 @@
         <!--begin::Brand Link-->
         <a href="/" class="brand-link">
             <!--begin::Brand Image-->
-            <img
-                src="{{ asset('assests/image/Untitled design.png') }}"
-                alt="AdminLTE Logo"
-                class="brand-image opacity-75 shadow img-fluid w-100 h-auto"
-                 style="object-fit: contain;"
-            />
+            <img src="{{ asset('assests/image/Untitled design.png') }}" alt="AdminLTE Logo"
+                class="brand-image opacity-75 shadow img-fluid w-100 h-auto" style="object-fit: contain;" />
             <!--end::Brand Image-->
             <!--begin::Brand Text-->
-           
+
             <!--end::Brand Text-->
         </a>
         <!--end::Brand Link-->
@@ -33,22 +29,25 @@
                     </a>
                 </li>
 
-                <!-- Courses Management Section -->
+                <!-- Transcript Requests -->
                 <li class="nav-item">
-                    <a href="{{ route('admin.Request') }}" class="nav-link">
-                        <i class="nav-icon bi bi-book"></i>
-                        <p>Request</p>
+                    <a href="{{ route('admin.transcript-requests.index') }}" class="nav-link">
+                        <i class="nav-icon bi bi-file-text"></i>
+                        <p>Transcript Requests</p>
                     </a>
                 </li>
 
+                <!-- Document Requests -->
+                
+
                 <!-- View Enrolled Students Section -->
-              
+
 
                 <!-- Assignments Management Section -->
-               
+
 
                 <!-- Reports Section -->
-               
+
 
                 <!-- Profile Section -->
                 <li class="nav-item">
@@ -68,7 +67,8 @@
 
                 <!-- Logout -->
                 <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <a href="#" class="nav-link"
+                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                         <i class="nav-icon bi bi-box-arrow-right"></i>
                         <p>Logout</p>
                     </a>

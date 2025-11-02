@@ -108,7 +108,10 @@
                         <div class="col-md-6">
                             <label for="department" class="form-label">Department</label>
                             <input type="text" class="form-control" id="department" name="department"
-                                value="{{ old('department') }}">
+                                value="{{ old('department') }}" required>
+                            @error('department')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-6">
                             <label for="phone" class="form-label">Phone Number</label>

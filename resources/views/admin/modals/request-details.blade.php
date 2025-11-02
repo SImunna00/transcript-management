@@ -38,6 +38,10 @@
                                 <td>{{ $request->year ?? $request->academic_year ?? 'N/A' }}</td>
                             </tr>
                             <tr>
+                                <td><strong>Session:</strong></td>
+                                <td>{{ $request->session ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
                                 <td><strong>Term:</strong></td>
                                 <td>{{ $request->term ?? 'N/A' }}</td>
                             </tr>
@@ -74,10 +78,10 @@
                                 </td>
                             </tr>
                             @if($request->transaction_id)
-                            <tr>
-                                <td><strong>Transaction ID:</strong></td>
-                                <td>{{ $request->transaction_id }}</td>
-                            </tr>
+                                <tr>
+                                    <td><strong>Transaction ID:</strong></td>
+                                    <td>{{ $request->transaction_id }}</td>
+                                </tr>
                             @endif
                         </table>
                     </div>
@@ -111,28 +115,28 @@
                 </div>
 
                 @if($request->additional_info)
-                <hr>
-                <h6 class="text-primary"><i class="fas fa-comment mr-1"></i> Additional Information</h6>
-                <div class="bg-light p-3 rounded">
-                    {{ $request->additional_info }}
-                </div>
+                    <hr>
+                    <h6 class="text-primary"><i class="fas fa-comment mr-1"></i> Additional Information</h6>
+                    <div class="bg-light p-3 rounded">
+                        {{ $request->additional_info }}
+                    </div>
                 @endif
 
                 @if($request->admin_notes)
-                <hr>
-                <h6 class="text-primary"><i class="fas fa-sticky-note mr-1"></i> Admin Notes</h6>
-                <div class="bg-warning p-3 rounded">
-                    {{ $request->admin_notes }}
-                </div>
+                    <hr>
+                    <h6 class="text-primary"><i class="fas fa-sticky-note mr-1"></i> Admin Notes</h6>
+                    <div class="bg-warning p-3 rounded">
+                        {{ $request->admin_notes }}
+                    </div>
                 @endif
 
                 @if($request->result_file)
-                <hr>
-                <h6 class="text-primary"><i class="fas fa-file-pdf mr-1"></i> Uploaded Transcript</h6>
-                <div class="bg-success p-3 rounded text-white">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    Transcript has been uploaded and is available for download.
-                </div>
+                    <hr>
+                    <h6 class="text-primary"><i class="fas fa-file-pdf mr-1"></i> Uploaded Transcript</h6>
+                    <div class="bg-success p-3 rounded text-white">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Transcript has been uploaded and is available for download.
+                    </div>
                 @endif
             </div>
             <div class="modal-footer">
@@ -141,9 +145,8 @@
                         <i class="fas fa-download"></i> Download Transcript
                     </a>
                 @endif
-                <button type="button" class="btn btn-primary" 
-                        data-dismiss="modal" data-toggle="modal" 
-                        data-target="#statusModal{{ $request->id }}">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" data-toggle="modal"
+                    data-target="#statusModal{{ $request->id }}">
                     <i class="fas fa-edit"></i> Update Status
                 </button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

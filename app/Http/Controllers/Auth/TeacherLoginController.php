@@ -32,9 +32,13 @@ class TeacherLoginController extends Controller
 
         // Attempt to authenticate the teacher
         if (Auth::guard('teacher')->attempt($request->only('email', 'password'), $request->boolean('remember'))) {
-            $request->session()->regenerate();
+            // Make sure the web middleware is properly applied
+            if ($request->hasSession()) {
+                $request->session()->regenerate();
+            }
 
-            return redirect()->intended(route('teacher.dashboard'));
+            // Redirect to intended URL (if exists) or default to dashboard
+            return redirect()->intended('/teacher/dashboard');
         }
 
         // Make sure error is stored in session

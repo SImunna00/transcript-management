@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Teacher Dashboard') - Transcript Management</title>
 
     <!-- Bootstrap CSS -->
@@ -107,12 +108,18 @@
                             </a>
                         </li>
                         <li class="nav-item mt-5">
-                            <form action="{{ route('teacher.logout') }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn btn-danger w-100">
-                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                </button>
-                            </form>
+                            @if(Auth::guard('teacher')->check())
+                                <form action="{{ route('teacher.logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ url('/') }}" class="btn btn-secondary w-100">
+                                    <i class="fas fa-home me-2"></i> Home
+                                </a>
+                            @endif
                         </li>
                     </ul>
                 </div>
@@ -126,8 +133,9 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <h1 class="h3">@yield('page-title', 'Dashboard')</h1>
                             <div class="user-info d-flex align-items-center">
-                                <span class="me-2">{{ Auth::guard('teacher')->user()->name }}</span>
-                                @if(Auth::guard('teacher')->user()->photo)
+                                <span
+                                    class="me-2">{{ Auth::guard('teacher')->check() ? Auth::guard('teacher')->user()->name : 'Demo Teacher' }}</span>
+                                @if(Auth::guard('teacher')->check() && Auth::guard('teacher')->user()->photo)
                                     <img src="{{ Storage::url(Auth::guard('teacher')->user()->photo) }}" alt="Profile"
                                         class="rounded-circle" width="40" height="40">
                                 @else
