@@ -49,7 +49,7 @@ This Laravel-based Transcript Management System streamlines academic record mana
 - ✅ Secure registration and authentication
 - ✅ View enrolled courses and marks
 - ✅ Request official transcripts
-- ✅ Integrated payment gateway (Stripe)
+- ✅ Integrated payment gateway (SSLCommerz)
 - ✅ Track request status in real-time
 - ✅ Download PDF marksheets
 
@@ -85,7 +85,7 @@ This Laravel-based Transcript Management System streamlines academic record mana
 | **Database** | SQLite (dev), MySQL/PostgreSQL (prod) |
 | **Frontend** | Blade Templates, Bootstrap 5 |
 | **Authentication** | Laravel Breeze (Multi-Guard) |
-| **Payment** | Stripe API |
+| **Payment** | SSLCommerz (Bangladesh) |
 | **PDF Generation** | DomPDF / Laravel PDF |
 | **Version Control** | Git, GitHub |
 | **Server** | Apache/Nginx |
@@ -154,9 +154,13 @@ DB_CONNECTION=sqlite
 # DB_USERNAME=root
 # DB_PASSWORD=your_password
 
-# Stripe Payment Configuration
-STRIPE_KEY=pk_test_your_publishable_key
-STRIPE_SECRET=sk_test_your_secret_key
+# SSLCommerz Payment Configuration (Sandbox)
+SSLCOMMERZ_STORE_ID=your_store_id
+SSLCOMMERZ_STORE_PASSWORD=your_store_password
+SSLCOMMERZ_SANDBOX=true
+
+# For Production
+# SSLCOMMERZ_SANDBOX=false
 
 # Mail Configuration (for notifications)
 MAIL_MAILER=smtp
@@ -220,16 +224,69 @@ Visit: **http://localhost:8000**
 
 ## ⚙️ Configuration
 
-### Payment Gateway Setup (Stripe)
+### Payment Gateway Setup (SSLCommerz)
 
-1. Create account at [Stripe](https://stripe.com)
-2. Navigate to Developers → API Keys
-3. Copy **Publishable key** and **Secret key**
-4. Add to `.env`:
+#### For Sandbox (Testing)
+
+1. **Register for SSLCommerz Sandbox Account**
+   - Visit: [https://developer.sslcommerz.com/registration/](https://developer.sslcommerz.com/registration/)
+   - Create a sandbox account (free)
+
+2. **Get Credentials**
+   - Login to [SSLCommerz Sandbox Dashboard](https://sandbox.sslcommerz.com/)
+   - Navigate to: **Settings → API Credentials**
+   - Copy **Store ID** and **Store Password**
+
+3. **Add to `.env`**:
    ```env
-   STRIPE_KEY=pk_test_xxxxxxxxxxxxx
-   STRIPE_SECRET=sk_test_xxxxxxxxxxxxx
+   SSLCOMMERZ_STORE_ID=test123456  # Your sandbox store ID
+   SSLCOMMERZ_STORE_PASSWORD=test123456@ssl  # Your sandbox password
+   SSLCOMMERZ_SANDBOX=true
    ```
+
+4. **Test Credentials (Sandbox)**:
+   ```env
+   # Default SSLCommerz sandbox credentials for testing
+   SSLCOMMERZ_STORE_ID=testbox
+   SSLCOMMERZ_STORE_PASSWORD=qwerty
+   SSLCOMMERZ_SANDBOX=true
+   ```
+
+#### For Production
+
+1. **Get Live Account**
+   - Contact SSLCommerz: [https://sslcommerz.com/](https://sslcommerz.com/)
+   - Complete merchant verification
+   - Get production credentials
+
+2. **Update `.env`**:
+   ```env
+   SSLCOMMERZ_STORE_ID=your_live_store_id
+   SSLCOMMERZ_STORE_PASSWORD=your_live_password
+   SSLCOMMERZ_SANDBOX=false  # Important: Set to false for production
+   ```
+
+3. **Configure IPN URL** (Instant Payment Notification):
+   - In SSLCommerz dashboard, set IPN URL to:
+   ```
+   https://yourdomain.com/payment/ipn
+   ```
+
+#### SSLCommerz Test Cards
+
+For sandbox testing, use these test cards:
+
+| Card Type | Card Number | CVV | Expiry | Status |
+|-----------|-------------|-----|--------|--------|
+| Visa | 4242424242424242 | 123 | Any future date | Success |
+| MasterCard | 5555555555554444 | 123 | Any future date | Success |
+| Amex | 378282246310005 | 1234 | Any future date | Success |
+| Decline | 4000000000000002 | 123 | Any future date | Declined |
+
+**Mobile Banking (Sandbox)**:
+- bKash: Use any 11-digit number starting with 01
+- Rocket: Use any 11-digit number starting with 01
+- Nagad: Use any 11-digit number starting with 01
 
 ### Email Configuration
 
@@ -282,7 +339,7 @@ git config core.autocrlf true
 2. **View Courses** → See enrolled courses
 3. **Request Transcript**:
    - Fill request form
-   - Make payment via Stripe
+   - Make payment via SSLCommerz (supports bKash, Rocket, Nagad, Credit/Debit cards)
    - Track request status
 4. **Download Marksheet** → PDF generation
 
@@ -309,6 +366,20 @@ git config core.autocrlf true
    - Verify payments
    - Approve/reject requests
 6. **Generate Reports** → Analytics dashboard
+
+### Payment Flow
+
+```
+Student → Request Transcript → SSLCommerz Payment Page
+   ↓
+Choose Payment Method (Card/bKash/Rocket/Nagad)
+   ↓
+Complete Payment → SSLCommerz validates
+   ↓
+Success → IPN callback → Update request status
+   ↓
+Admin reviews → Approve/Process transcript
+```
 
 ## 📊 Database Schema
 
@@ -404,9 +475,11 @@ transcript_requests
 ├── user_id
 ├── request_date
 ├── status (pending/approved/rejected)
-├── payment_status
-├── payment_id (Stripe)
+├── payment_status (pending/paid/failed)
+├── payment_id (SSLCommerz transaction ID)
+├── payment_method (card/bkash/rocket/nagad)
 ├── session (academic year)
+├── amount
 └── timestamps
 ```
 
@@ -442,6 +515,30 @@ GET  /api/teacher/students/{id}
 GET  /api/admin/users
 POST /api/admin/courses
 PUT  /api/admin/requests/{id}/approve
+```
+
+### Payment Endpoints
+
+```http
+# Initialize payment
+POST /payment/checkout
+{
+  "request_id": 1,
+  "amount": 500,
+  "currency": "BDT"
+}
+
+# Payment success callback
+POST /payment/success
+
+# Payment failure callback
+POST /payment/fail
+
+# Payment cancel callback
+POST /payment/cancel
+
+# IPN (Instant Payment Notification)
+POST /payment/ipn
 ```
 
 ### Example Request
@@ -488,7 +585,7 @@ public function test_student_can_request_transcript()
     $response = $this->actingAs($student)
         ->post('/transcript-request', [
             'session' => '2024-2025',
-            'payment_method' => 'stripe'
+            'payment_method' => 'sslcommerz'
         ]);
     
     $response->assertStatus(200);
@@ -509,6 +606,11 @@ public function test_student_can_request_transcript()
    APP_ENV=production
    APP_DEBUG=false
    APP_URL=https://yourdomain.com
+   
+   # SSLCommerz Production
+   SSLCOMMERZ_SANDBOX=false
+   SSLCOMMERZ_STORE_ID=your_live_store_id
+   SSLCOMMERZ_STORE_PASSWORD=your_live_password
    ```
 4. **Run migrations via SSH or cPanel Terminal**:
    ```bash
@@ -592,6 +694,9 @@ heroku addons:create heroku-postgresql:hobby-dev
 heroku config:set APP_KEY=$(php artisan key:generate --show)
 heroku config:set APP_ENV=production
 heroku config:set APP_DEBUG=false
+heroku config:set SSLCOMMERZ_STORE_ID=your_store_id
+heroku config:set SSLCOMMERZ_STORE_PASSWORD=your_password
+heroku config:set SSLCOMMERZ_SANDBOX=false
 
 # Deploy
 git push heroku main
@@ -617,6 +722,7 @@ heroku run php artisan migrate --force
   APP_ENV=production
   APP_DEBUG=false
   APP_URL=https://yourdomain.com
+  SSLCOMMERZ_SANDBOX=false
   ```
 
 - [ ] Change default passwords
@@ -633,6 +739,7 @@ heroku run php artisan migrate --force
 - [ ] Configure CORS if using API
 - [ ] Enable rate limiting
 - [ ] Set up monitoring (logs, uptime)
+- [ ] Whitelist SSLCommerz IPs for IPN callbacks
 
 ### Security Best Practices
 
@@ -644,6 +751,7 @@ heroku run php artisan migrate --force
 - Password hashing (bcrypt)
 - Secure session management
 - Input validation and sanitization
+- Payment verification with SSLCommerz hash validation
 ```
 
 ## 🔧 Troubleshooting
@@ -684,11 +792,34 @@ touch database/database.sqlite
 php artisan config:clear
 ```
 
-**5. Stripe Payment Errors**
+**5. SSLCommerz Payment Errors**
+
+**Error: "Store ID or Password incorrect"**
 ```bash
-# Verify keys in .env
-# Use test keys (pk_test_xxx) in development
-# Check webhook configuration in Stripe dashboard
+# Verify credentials in .env
+# For sandbox, use test credentials:
+SSLCOMMERZ_STORE_ID=testbox
+SSLCOMMERZ_STORE_PASSWORD=qwerty
+SSLCOMMERZ_SANDBOX=true
+
+# Clear config cache
+php artisan config:clear
+```
+
+**Error: "Payment gateway not responding"**
+```bash
+# Check sandbox mode
+SSLCOMMERZ_SANDBOX=true  # For testing
+
+# Verify network connectivity
+curl https://sandbox.sslcommerz.com/gwprocess/v4/api.php
+```
+
+**Error: "IPN validation failed"**
+```bash
+# Ensure IPN URL is publicly accessible
+# Check logs: storage/logs/laravel.log
+# Verify hash validation in PaymentController
 ```
 
 **6. 500 Internal Server Error**
@@ -734,7 +865,19 @@ php artisan optimize:clear
 
 # Run queue workers (if using queues)
 php artisan queue:work
+
+# Test SSLCommerz connection
+php artisan tinker
+>>> app('sslcommerz')->makePayment([...]);
 ```
+
+### SSLCommerz Testing Tips
+
+1. **Always use sandbox mode for development**
+2. **Test all payment methods**: Card, bKash, Rocket, Nagad
+3. **Test failure scenarios**: Use decline test card
+4. **Verify IPN callbacks**: Check logs for webhook hits
+5. **Test amount validation**: Ensure minimum 10 BDT
 
 ## 🤝 Contributing
 
@@ -831,7 +974,7 @@ SOFTWARE.
 ## 🙏 Acknowledgments
 
 - [Laravel Framework](https://laravel.com) - The PHP framework
-- [Stripe](https://stripe.com) - Payment processing
+- [SSLCommerz](https://sslcommerz.com) - Payment gateway for Bangladesh
 - [Bootstrap](https://getbootstrap.com) - UI framework
 - [DomPDF](https://github.com/dompdf/dompdf) - PDF generation
 - All contributors and open-source community
@@ -845,6 +988,11 @@ Need help? Here's how to get support:
 - 💡 [Request a Feature](https://github.com/SImunna00/transcript-management/issues)
 - 📧 Email: support@example.com
 - 💬 Discussions: [GitHub Discussions](https://github.com/SImunna00/transcript-management/discussions)
+
+### SSLCommerz Support
+- Documentation: [https://developer.sslcommerz.com/](https://developer.sslcommerz.com/)
+- Support Email: support@sslcommerz.com
+- Sandbox Dashboard: [https://sandbox.sslcommerz.com/](https://sandbox.sslcommerz.com/)
 
 ## 📈 Project Stats
 
